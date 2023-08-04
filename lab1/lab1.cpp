@@ -9,15 +9,13 @@ namespace nString {
         char *str;
         int len;
         static const int CINLIM = 2049;
-    public:
-        static int STRING_COUNTER;
 
     public:
         tString(){
             len = 0;
             str = new char[1];
             str[0] = '\0';
-            STRING_COUNTER += 1;
+            std::cout << "[01] LOG MAKE EMPTY STRING\n";
 
         } //конструктор
         tString(const char *s) {
@@ -33,10 +31,12 @@ namespace nString {
         tString& operator=(const tString & s){
             if (this == &s)
                 return *this;
+            std::cout << "[1] LOG: STRING ASSIGNED" << str <<'\n';
             delete [] str;
             len = s.len;
             str = new char [len + 1];
             std::strcpy(str, s.str);
+            std::cout << "[2] LOG: STRING ASSIGNED" << str <<'\n';
             return *this;
         } // оператор присваивания 
         friend std::ostream & operator<<(std::ostream & os,const tString & st){
@@ -57,12 +57,13 @@ namespace nString {
 namespace nDict {
     class mKeyAndValue{
     public:
-        long long key;
+        unsigned long long key;
         nString::tString str;
 
         mKeyAndValue(){
             this->key = 0;
             this->str = nString::tString();
+            std::cout << "[5] LOG: Make empty key \n";
         }
         mKeyAndValue(const long long & k,const nString::tString & s){
             this->key = k;
@@ -87,9 +88,9 @@ namespace nDict {
         int capacity;
         mKeyAndValue* data;
         mDict(){
-            capacity = 1;
+            capacity = 4;
             quantity = 0;
-            data = new mKeyAndValue[1];
+            data = new mKeyAndValue[4];
         }
         mDict(const long long & k,const nString::tString& s){
             capacity = 1;
@@ -97,10 +98,11 @@ namespace nDict {
             data = new mKeyAndValue(k,s);
         }
         ~mDict(){
+            std::cout << "[4] LOG: DICT DELETE \n";
             delete [] data;
         }
         
-        void AddElement(mKeyAndValue el){
+        void AddElement(const mKeyAndValue& el){
             if(capacity <= quantity){
                 mKeyAndValue* temp = new mKeyAndValue[2 * capacity];
                 
@@ -111,6 +113,7 @@ namespace nDict {
                 delete [] data;
                 capacity *= 2;
                 data = temp;
+                std::cout << "[3] LOG: STRING CAPACITY INCREASE" << capacity <<'\n';  
             }
             data[quantity] = el;
             quantity += 1;
@@ -122,53 +125,26 @@ namespace nDict {
 
 
 int main(){
-    /*
-    nString::tString str1("a");
-    nString::tString str2("b");
-    nString::tString str3("c");
-    nString::tString str4("d");
-    nString::tString str5("e");
-    nString::tString str6("f");
-    nString::tString str7("g");
-    //nDict::mDict dict1;
-    //nDict::mKeyAndValue el1(111,"fffff");
-    //nDict::mKeyAndValue el2(112,"aaaaa");
-    //dict1.AddElment(dict1, el1);
-    //dict1.AddElment(dict1,el2);
-    //std::cout <<"In dict first element: " << dict1.data[0].key << '\n' ;
-    //std::cout <<"In dict second element: " << dict1.data[1].key << '\n' ;
-    nDict::mKeyAndValue el1(1,str1);
-    nDict::mKeyAndValue el2(2,str2);
-    nDict::mKeyAndValue el3(3,str3);
-    nDict::mKeyAndValue el4(4,str4);
-    nDict::mKeyAndValue el5(5,str5);
-    nDict::mKeyAndValue el6(6,str6);
-    nDict::mKeyAndValue el7(7,str7);
-    nDict::mDict dict;
-    dict.AddElement(el1);  
-    dict.AddElement(el2);
-    dict.AddElement(el3);
-    dict.AddElement(el4);
-    dict.AddElement(el5);
-    dict.AddElement(el6);
-    dict.AddElement(el7);
-    std::cout << "String: " << str1 << '\n';
-    std::cout << "Dict data 0 key:" << dict.data[0].key << " value:" <<dict.data[0].str <<'\n';
-    std::cout << "Dict data 1 key:" << dict.data[1].key << " value:" <<dict.data[1].str <<'\n'; 
-    std::cout << "Dict data 2 key:" << dict.data[2].key << " value:" <<dict.data[2].str <<'\n';
-    std::cout << "Dict data 3 key:" << dict.data[3].key << " value:" <<dict.data[3].str <<'\n';
-    std::cout << "Dict data 4 key:" << dict.data[4].key << " value:" <<dict.data[4].str <<'\n';
-    std::cout << "Dict data 5 key:" << dict.data[5].key << " value:" <<dict.data[5].str <<'\n';
-    std::cout << "Dict data 6 key:" << dict.data[6].key << " value:" <<dict.data[6].str <<'\n';
-    */
-    long long key;
+    std::cout << "START PROCCES\n";    
+    unsigned long long key;
+    std::cout << "START PROCCES 2\n";
     nString::tString str;
-    std::ofstream out;
-
+    std::cout << "START PROCCES 3\n";
+    nDict::mKeyAndValue el;
+    std::cout << "START PROCCES 4\n";
+    nDict::mDict dict;
+    std::cout << "START PROCCES 5\n";
     while (std::cin >> key >> str)
-    {
-        std::cout <<"Key: " << key << " str:" << str << '\n';
+    {  
+        el = nDict::mKeyAndValue(key,str);
+        dict.AddElement(el);
     }
+    
+    for (int i = 0; i < 4; i++)
+    {
+        std::cout <<"Key: " << dict.data[i].key << " str:" << dict.data[i].str << '\n';
+    }
+    
     //std::cout << "Dict data 2 key:" << dict.data[2].key << " value:" <<dict.data[2].string <<'\n';
     return 0;
 }
