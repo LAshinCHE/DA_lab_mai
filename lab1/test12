@@ -1,0 +1,36 @@
+void CountingSort(nDict::TDict& d, nDict::TDict& tempDict, int digit, int dictSize, int bitShift) {
+    const int bitMask = 256;
+    int bitArray[bitMask] = {0};
+    int dataByte;
+
+    for (int i = 0; i < dictSize; i++) {
+        dataByte = (d.data[i].key >> bitShift) & (bitMask - 1);
+        bitArray[dataByte]++;
+    }
+
+    for (int i = 1; i < bitMask; i++) {
+        bitArray[i] += bitArray[i - 1];
+    }
+
+    for (int i = dictSize - 1; i >= 0; i--) {
+        dataByte = (d.data[i].key >> bitShift) & (bitMask - 1);
+        tempDict.data[bitArray[dataByte] - 1] = d.data[i];
+        bitArray[dataByte]--;
+    }
+}
+
+void RadixSort(nDict::TDict& d, const unsigned long long maxKey) {
+    int dictSize = d.GetSize();
+    nDict::TDict tempDict(dictSize);
+
+    int bitShift = 0;
+    unsigned long long mask = 255; // Initial mask for the first byte
+
+    while (mask <= maxKey) {
+        CountingSort(d, tempDict, bitShift, dictSize, bitShift * 8);
+        std::swap(d, tempDict);
+        
+        bitShift++;
+        mask <<= 8; // Shift the mask to the next byte position
+    }
+}

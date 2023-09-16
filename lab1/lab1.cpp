@@ -1,150 +1,110 @@
-#include <iostream>
-#include <cstring>
-#include <fstream>
+    #include <iostream>
+    #include <cstring>
 
-namespace nString {
+    namespace nDict {
+        class TKeyAndValue{
+        public:
+            unsigned long long key;
+            std::string str;
 
-    class tString{
-    private:
-        char *str;
-        int len;
-        static const int CINLIM = 2049;
-
-    public:
-        tString(){
-            len = 0;
-            str = new char[1];
-            str[0] = '\0';
-            std::cout << "[01] LOG MAKE EMPTY STRING\n";
-
-        } //конструктор
-        tString(const char *s) {
-            len = std::strlen(s);
-            str = new char [len + 1];
-            std::strcpy(str,s);
-        }//Конструктор по умлолчанию
-        tString(const tString & s){
-            len = s.len;
-            str = new char [len];
-            std::strcpy(str, s.str);
-        } // конструктор копирования
-        tString& operator=(const tString & s){
-            if (this == &s)
+            TKeyAndValue(): key(0), str() {}
+            TKeyAndValue(const unsigned long long & k,const std::string s):key(k),str(s){}
+            TKeyAndValue(const TKeyAndValue& mkv):key(mkv.key),str(mkv.str){}// конструктор копирования
+            TKeyAndValue& operator=(const TKeyAndValue& el){
+                key = el.key;
+                str = el.str;
                 return *this;
-            std::cout << "[1] LOG: STRING ASSIGNED" << str <<'\n';
-            delete [] str;
-            len = s.len;
-            str = new char [len + 1];
-            std::strcpy(str, s.str);
-            std::cout << "[2] LOG: STRING ASSIGNED" << str <<'\n';
-            return *this;
-        } // оператор присваивания 
-        friend std::ostream & operator<<(std::ostream & os,const tString & st){
-            os << st.str;
-            return os;
-        }
-        friend std::istream & operator>>(std::istream & in, tString& st){
-            in >> st.str;
-            return in;
-        }
-        ~tString() {
-            std::cout << "\"" << str << "\"object deleted, "<< '\n';
-            delete [] str;
-        } // деструктор
-    };//class tString
-} // nString namespace
+            }//оператор присваивания 
+        };// class mKeyValue
 
-namespace nDict {
-    class mKeyAndValue{
-    public:
-        unsigned long long key;
-        nString::tString str;
+        class TDict {
+        private:
+        public:
+            int size =  0;
+            int capacity = 0;
+            TKeyAndValue* data = nullptr;
+            TDict(): capacity(125000), size(0){
+                data = new TKeyAndValue[capacity];
+            }
+            TDict(const int & n): size(0), capacity(n){
+                data = new TKeyAndValue[n];
+            }
+            ~TDict(){
+                delete [] data;
+            }
+            
+            void AddElement(const TKeyAndValue& el){
+                if(capacity <= size){
+                    TKeyAndValue* temp = new TKeyAndValue[2 * capacity];
+                    std::copy(&data[0],&data[size],temp);
+                    std::swap(temp,data);
+                    capacity *= 2;
+                    delete [] temp;
+                }
+                data[size] = el;
+                size += 1;
+            }
+            int GetSize(){
+                return size;
+            }
+        }; // class TDictd 
+    } // nDict namespace
 
-        mKeyAndValue(){
-            this->key = 0;
-            this->str = nString::tString();
-            std::cout << "[5] LOG: Make empty key \n";
-        }
-        mKeyAndValue(const long long & k,const nString::tString & s){
-            this->key = k;
-            this->str = nString::tString(s);
-            std::cout << "Create: key - "<< this->key << ", value - " << str <<'\n';
-        }
-        mKeyAndValue(const mKeyAndValue& mkv){
-            this->key = mkv.key;
-            this->str = mkv.str;
-        }// конструктор копирования
-        mKeyAndValue& operator=(const mKeyAndValue& el){
-            key = el.key;
-            str = el.str;
-            return *this;
-        }//оператор присваивания 
-    };// class mKeyValue
+    void CountingSort(nDict::TDict& d, nDict::TDict& tempDict,const int& digit,const int& dictSize,const int& bitShift){
+        const int bitMask = 256;
+        int bitArray[bitMask]  = {0};
+        int dataByte;
 
-    class mDict {
-    private:
-    public:
-        int quantity;
-        int capacity;
-        mKeyAndValue* data;
-        mDict(){
-            capacity = 4;
-            quantity = 0;
-            data = new mKeyAndValue[4];
-        }
-        mDict(const long long & k,const nString::tString& s){
-            capacity = 1;
-            quantity = 1;
-            data = new mKeyAndValue(k,s);
-        }
-        ~mDict(){
-            std::cout << "[4] LOG: DICT DELETE \n";
-            delete [] data;
+        for (int i = 0; i < dictSize; i++){
+            dataByte =  (d.data[i].key >> bitShift) & (bitMask - 1);
+            bitArray[dataByte] += 1; 
         }
         
-        void AddElement(const mKeyAndValue& el){
-            if(capacity <= quantity){
-                mKeyAndValue* temp = new mKeyAndValue[2 * capacity];
-                
-                for (size_t i = 0; i < quantity; i++){
-                    temp[i] = data[i];
-                }
-                
-                delete [] data;
-                capacity *= 2;
-                data = temp;
-                std::cout << "[3] LOG: STRING CAPACITY INCREASE" << capacity <<'\n';  
-            }
-            data[quantity] = el;
-            quantity += 1;
+        for (int i = 1; i < bitMask; i++)
+            bitArray[i] = bitArray[i - 1] + bitArray[i];
+
+
+        for (int i = dictSize - 1; i >= 0; i--){
+            dataByte = (d.data[i].key >> bitShift) & (bitMask - 1);
+            tempDict.data[bitArray[dataByte] - 1] = d.data[i];
+            bitArray[dataByte] -= 1;
         }
-    }; // class mDictd 
-} // nDict namespace
 
-
-
-
-int main(){
-    std::cout << "START PROCCES\n";    
-    unsigned long long key;
-    std::cout << "START PROCCES 2\n";
-    nString::tString str;
-    std::cout << "START PROCCES 3\n";
-    nDict::mKeyAndValue el;
-    std::cout << "START PROCCES 4\n";
-    nDict::mDict dict;
-    std::cout << "START PROCCES 5\n";
-    while (std::cin >> key >> str)
-    {  
-        el = nDict::mKeyAndValue(key,str);
-        dict.AddElement(el);
     }
-    
-    for (int i = 0; i < 4; i++)
-    {
-        std::cout <<"Key: " << dict.data[i].key << " str:" << dict.data[i].str << '\n';
+
+    void RadixSort(nDict::TDict& d, const unsigned long long& maxKey,const int& dictSize){
+        nDict::TDict tempDict(dictSize); 
+        for (int digit =  0 ; digit < 8 ; digit++){
+            if ((digit & 1) == 0)
+                CountingSort(d,tempDict,digit, dictSize,digit * 8);
+            else
+                CountingSort(tempDict,d,digit, dictSize,digit * 8);
+        }
+        
     }
-    
-    //std::cout << "Dict data 2 key:" << dict.data[2].key << " value:" <<dict.data[2].string <<'\n';
-    return 0;
-}
+
+    int main(){
+        std::ios::sync_with_stdio(false);
+        std::cin.tie(0);
+        std::cout.tie(0);
+        unsigned long long key;
+        std::string str;
+        nDict::TKeyAndValue el;
+        nDict::TDict dict;
+        unsigned long long maxKey = -1;
+        while (std::cin >> key >> str)
+        {
+            el = {key,str};
+            if (maxKey < key)
+                maxKey = key;
+            
+            dict.AddElement(el);
+        }
+        int dictSize = dict.GetSize();
+        RadixSort(dict,maxKey,dictSize);
+        for (int i = 0; i < dictSize; i++)
+        {
+            std::cout << dict.data[i].key << '\t' <<dict.data[i].str << '\n';
+        }
+        return 0;
+    }  
