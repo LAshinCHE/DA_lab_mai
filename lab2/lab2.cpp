@@ -2,6 +2,7 @@
 #include <string>
 #include <stdexcept>
 #include <tuple>
+
 // char кодируется 1 байтом 8 * 256 = 2048
 
 // если посмотреть на то как закодированны символы, то можно понять что для проверки нам понадобятся всего лишь первые 5 бит
@@ -25,7 +26,7 @@ struct TNode{
     TNode(const std::string& k,const unsigned long long& n,const int& bn, TNode* l, TNode* r)
     : key(k), number(n), bitNumber(bn), left(l), right(r){}
     TNode() = default;
-    ~TNode() {};
+    ~TNode() { left = nullptr; right = nullptr;}
 };// struct TNode
 
 bool CheckBit(const std::string& s,const int& bitNumber){
@@ -58,29 +59,33 @@ class TPatriciaTrie{
     TNode* header = nullptr;
 
     private:
-    std::tuple<TNode*,TNode*,TNode*> SearchPlaceToInsert(const std::string& searchedKey)const{
-        TNode* parentNode = header;
-        TNode* prevNode = header;
-        TNode* curentNode = header->left;
-        while(curentNode->bitNumber > prevNode->bitNumber){
-            if (nPatricia::CheckBit(searchedKey,curentNode->bitNumber)){
-                if (curentNode->right->bitNumber <= curentNode->bitNumber)
-                    parentNode = prevNode;
-                
-                prevNode = curentNode;
-                curentNode = curentNode->right;
-                
-                
-            }
-            else{ // иначе по левой
-                if (curentNode->left->bitNumber <= curentNode->bitNumber)
-                    parentNode = prevNode;
-                prevNode = curentNode; 
-                curentNode = curentNode->left;
-            }
-        }
-        return std::make_tuple(parentNode,prevNode,curentNode);
+    std::tuple<TNode*,TNode*,TNode*> SearchBackLick(){
 
+    }
+    void DeleteNode(TNode* node){
+        std::cout << "delete : " << node->key << '\n';
+        delete node;
+        node = nullptr;
+        std::cout << "OK\n";
+    }
+    std::tuple<TNode*,TNode*, TNode*> SearchNodeAndParent(std::string searchedKey){
+        if (header == nullptr){
+            throw std::runtime_error("Header is empty cant search the key \n");
+        }
+        nPatricia::TNode* curNode = header->left;
+        nPatricia::TNode* prevNode = header;   
+        nPatricia::TNode* prePrevious = nullptr;
+        // Ищем до тех пор пока не перейдем по обратной ссылке, т е либо наш бит уменьшится,либо останется прежним
+        while (curNode->bitNumber > prevNode->bitNumber){
+            // если бит единица идем по правой ссылке
+            prePrevious = prevNode;
+            prevNode = curNode;
+            if (nPatricia::CheckBit(searchedKey,curNode->bitNumber))
+                curNode = curNode->right;
+            else // иначе по левой
+                curNode = curNode->left;
+        }
+        return std::make_tuple(curNode, prevNode,prePrevious);
     }
     public:
 
@@ -132,8 +137,6 @@ class TPatriciaTrie{
         }
 
         TNode* insNode = new TNode(insKey,insNum,insBit);
-        std::cout << "ins Bit number" << insBit << '\n';
-        std::cout << "large-node bit number" << nodeLargeIndex->bitNumber << '\n';
         // если тот бит который отличается 1 то правая ссылка ведет на самогосебя, иначе левая на самого себя
         if(nPatricia::CheckBit(insKey,insBit)){
             insNode->right = insNode;
@@ -150,6 +153,71 @@ class TPatriciaTrie{
         std::cout << "OK\n";
     }
 
+    void Delete(std::string delKey){
+        //1. если нет header, то и искать нечего
+        if(header == nullptr){
+            std::cout << "NoSuchWord\n";
+            return;
+        }
+        //2. 1 нода header, тогда нужно проверить ключ и просто удалить ноду если ключ совпадает
+        if (header->left == header){
+            std::cout << "header->left == header" << '\n';
+            if (header->key == delKey ){
+                DeleteNode(header);
+            }
+            else{
+                std::cout << "NoSuchWord\n";
+            }
+            return;
+        }
+        std::tuple<TNode*,TNode*,TNode*> tupleNode = SearchNodeAndParent(delKey);
+        TNode* curNode = std::get<0>(tupleNode);
+        TNode* prevNode = std::get<1>(tupleNode);
+        TNode* prePreviousNode = std::get<2>(tupleNode);
+        TNode* parentNode = (curNode->key == prevNode->key) ?
+                            prePreviousNode :
+                            prevNode;
+        // нода с ключом delkey не найдена
+        if (curNode->key != delKey){
+            std::cout << "NoSuchWord\n";
+            return;
+        }
+        std::cout << "parent Node: " << parentNode->key << '\n';
+        std::cout << "parent check: " << CheckBit(parentNode->key,parentNode->bitNumber)<< '\n';
+        // 3. у ключа который мы удаляем есть 1 обратная ссылка на самого себя
+        if (curNode->left == curNode || curNode->right == curNode){
+            bool rightLinkParent = CheckBit(parentNode->key,parentNode->bitNumber);
+            bool leftLinkToCur = (curNode->left == curNode);
+            if (rightLinkParent){
+                if (leftLinkToCur){
+                    std::cout << "Here1r\n";
+                    parentNode->right = curNode->right;
+                    DeleteNode(curNode);
+                    return;
+                }
+                std::cout << "Herer2r\n";
+                parentNode->right = curNode->left;
+                DeleteNode(curNode);
+                return;
+            }
+            else{
+                if (leftLinkToCur){
+                    std::cout << "Here1l\n";
+                    parentNode->left = curNode->right;
+                    DeleteNode(curNode);
+                    return;
+                }
+                parentNode->left = curNode->left;
+                std::cout << "Here2l\n";
+                DeleteNode(curNode);
+                return;
+            }
+        }// 3     
+        else{
+            
+        }    
+    }
+        
 };// class TPatriciaTrie
 }// namespace nPatricia
 
@@ -157,5 +225,16 @@ class TPatriciaTrie{
 
 
 int main(){
+    nPatricia::TPatriciaTrie pt;
+    pt.Insert("a",12);
+    pt.Insert("ab",15);
+    std::cout <<  nPatricia::CheckBit(pt.header->key,pt.header->bitNumber) << '\n';
+    std::cout << "header: " << pt.header->bitNumber << " number: " << pt.header->number  << "\n";
+    std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
+    pt.Delete("ab");
+    std::cout << "header: " << pt.header->bitNumber << " number: " << pt.header->number  << "\n";
+    std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
+    pt.Delete("a");
+   // std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
     return 0;
 }

@@ -94,5 +94,24 @@ std::cout << lat << " : ";
 
 test 
 //////////////
+nPatricia::TPatriciaTrie* pt = new nPatricia::TPatriciaTrie();
+    pt->Insert("a",14); // 0 0 0 0 1  
+    pt->Insert("b",13); // 0 0 0 1 0 
+    pt->Insert("c",12); // 0 0 0 1 1
+    pt->Insert("d",11); // 0 0 1 0 0 
+    //pt->Insert("z",10); //1 1 0 1 0 
 
+    std::cout << "header: " << pt->header->bitNumber << " number: " << pt->header->number  << "\n";
+    //std::cout << "header right: " << pt->header->right->bitNumber << "\n";
+    std::cout << "header left bit: " << pt->header->left->bitNumber << " number: " << pt->header->left->number << "\n"; 
+    std::cout << "header left->left bit: " << pt->header->left->left->bitNumber <<  " number: " <<  pt->header->left->left->number << "\n";
+    std::cout << "header left->right bit: " << pt->header->left->right->bitNumber << " number: " << pt->header->left->right->number << "\n"; 
+    std::cout << "header left->left->right bit: " << pt->header->left->left->right->bitNumber << " number: "<<pt->header->left->left->right->number << "\n";
+    std::cout << "header left->left->left bit: " << pt->header->left->left->left->bitNumber << " number: " << pt->header->left->left->left->number << "\n"; 
+    std::cout << "header left->left->right->right bit: " << pt->header->left->left->right->right->bitNumber << " number: "<<pt->header->left->left->right->right->number << "\n";
+    std::cout << "header left->left->right->left bit: " << pt->header->left->left->right->left->bitNumber << " number: "<<pt->header->left->left->right->left->number << "\n";
+   // std::cout << "header left->left->left->left bit: " << pt->header->left->left->left->left->bitNumber << " number: " << pt->header->left->left->left->left->number << "\n"; 
+    //std::cout << "header left->left->left->right bit: " << pt->header->left->left->left->right->bitNumber << " number: " << pt->header->left->left->left->right->number << "\n"; 
+    std::cout << "header left->right->right bit: " << pt->header->left->right->right->bitNumber << " number: " << pt->header->left->right->right->number << "\n";
+    std::cout << "header left->right->left bit: " << pt->header->left->right->left->bitNumber << " number: " <<  pt->header->left->right->left->number << "\n"; 
 /////////////
