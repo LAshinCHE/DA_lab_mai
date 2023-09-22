@@ -59,9 +59,6 @@ class TPatriciaTrie{
     TNode* header = nullptr;
 
     private:
-    std::tuple<TNode*,TNode*,TNode*> SearchBackLick(){
-
-    }
     void DeleteNode(TNode* node){
         std::cout << "delete : " << node->key << '\n';
         delete node;
@@ -182,8 +179,6 @@ class TPatriciaTrie{
             std::cout << "NoSuchWord\n";
             return;
         }
-        std::cout << "parent Node: " << parentNode->key << '\n';
-        std::cout << "parent check: " << CheckBit(parentNode->key,parentNode->bitNumber)<< '\n';
         // 3. у ключа который мы удаляем есть 1 обратная ссылка на самого себя
         if (curNode->left == curNode || curNode->right == curNode){
             bool rightLinkParent = CheckBit(parentNode->key,parentNode->bitNumber);
@@ -213,9 +208,38 @@ class TPatriciaTrie{
                 return;
             }
         }// 3     
-        else{
-            
-        }    
+        // для нашей ноды prevNode есть родитель по которой мы в нее попали это будет наша prePreNode
+        TNode*  q = prevNode; // нода которую пытаемся удалить (обозначение взято из лекции, для удобства выполнения задания)
+        TNode* x = curNode; // нода которую надо удалить изначально (обозначение взято из лекции, для удобства выполнения задания)
+        TNode* parentQ = prePreviousNode;
+        // нужно найти такую ноду у которой есть обратная ссылка на q (в лекциях обозначается как p)
+        TNode* p = header;;
+        curNode = header->left;
+        std::string newSearchedKey = q->key;
+        while (p->bitNumber < curNode->bitNumber){
+            p = CheckBit(newSearchedKey, curNode->bitNumber) ? 
+                curNode->right : 
+                curNode->left;
+        }
+        bool qRightLinkBackRevers = (q->right == x); //  какая ссылка обратная у q и ведет к x
+        if (p->left == q)
+            p->left = x;
+        else
+            p->right = x;
+        if (parentQ->left == q)
+            parentQ->left = qRightLinkBackRevers ?  // если правая ссылка обратная тогда левая содержит ребенка (ведем qParent к этому ребенку)
+                            q->left :
+                            q->right;
+        else
+            parentQ->right = qRightLinkBackRevers ? 
+                    q->left : 
+                    q->right;
+        // присваиваем значение предидущей ноды и пытаемся уже удалить ее (в данной ситуации у curNode нет обратной ссылки)
+        p->key =  q->key;
+        p->number = q->number; 
+        DeleteNode(q);
+        std::cout << "OK\n";
+        return;
     }
         
 };// class TPatriciaTrie
