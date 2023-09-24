@@ -249,16 +249,20 @@ class TPatriciaTrie{
 
 
 int main(){
-    nPatricia::TPatriciaTrie pt;
-    pt.Insert("a",12);
-    pt.Insert("ab",15);
-    std::cout <<  nPatricia::CheckBit(pt.header->key,pt.header->bitNumber) << '\n';
-    std::cout << "header: " << pt.header->bitNumber << " number: " << pt.header->number  << "\n";
-    std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
-    pt.Delete("ab");
-    std::cout << "header: " << pt.header->bitNumber << " number: " << pt.header->number  << "\n";
-    std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
-    pt.Delete("a");
-   // std::cout << "header left bit: " << pt.header->left->bitNumber << " number: " << pt.header->left->number << "\n"; 
+    std::string action;
+    nPatricia::TPatriciaTrie ptr;
+    while(std::cin >> action){
+        if (action == "+"){
+            int64_t key;
+            std::string value;
+            std::cin >> key >> value;
+            if ()
+            {
+                /* code */
+            }
+            
+        }
+        
+    }
     return 0;
 }
