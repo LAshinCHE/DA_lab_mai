@@ -1,5 +1,5 @@
 ﻿GXX = g++
-FLAGS= -std=c++17 -Wall -Pedantic -g
+FLAG= -std=c++17 -Wall -pedantic -g
 
 all: lab2
 
@@ -9,8 +9,11 @@ lab2: lab2.cpp
 test:
 	./lab2
 
-valgrind: lab2
-	valgrind --leak-check=full --track-origins=yes ./lab2
+valgrind:
+	valgrind --leak-check=full --track-origins=yes -s ./lab2
 
 clear:
 	rm -r *.o
+
+del_report:
+	rm -r report.log.core*

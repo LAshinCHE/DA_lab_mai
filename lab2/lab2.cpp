@@ -17,13 +17,13 @@ namespace nPatricia{
 
 struct TNode{
     std::string key;
-    unsigned long long number;
-    int bitNumber; 
+    uint64_t number;
+    uint8_t bitNumber; 
     TNode* left = nullptr;
     TNode* right = nullptr;
-    TNode(const std::string& keyVal,const unsigned long long& n,const int& b)
+    TNode(const std::string& keyVal,const uint64_t& n,const int& b)
     : key(keyVal), number(n), bitNumber(b), left(nullptr), right(nullptr){}
-    TNode(const std::string& k,const unsigned long long& n,const int& bn, TNode* l, TNode* r)
+    TNode(const std::string& k,const uint64_t& n,const int& bn, TNode* l, TNode* r)
     : key(k), number(n), bitNumber(bn), left(l), right(r){}
     TNode() = default;
     ~TNode() { left = nullptr; right = nullptr;}
@@ -60,10 +60,9 @@ class TPatriciaTrie{
 
     private:
     void DeleteNode(TNode* node){
-        std::cout << "delete : " << node->key << '\n';
+        //std::cout << "delete : " << node->key << '\n';
         delete node;
         node = nullptr;
-        std::cout << "OK\n";
     }
     std::tuple<TNode*,TNode*, TNode*> SearchNodeAndParent(std::string searchedKey){
         if (header == nullptr){
@@ -77,11 +76,13 @@ class TPatriciaTrie{
             // если бит единица идем по правой ссылке
             prePrevious = prevNode;
             prevNode = curNode;
+            //std::cout << "CHECK BIT \n";
             if (nPatricia::CheckBit(searchedKey,curNode->bitNumber))
                 curNode = curNode->right;
             else // иначе по левой
                 curNode = curNode->left;
         }
+        //std::cout << "MAKE TUPLE\n";
         return std::make_tuple(curNode, prevNode,prePrevious);
     }
     public:
@@ -107,9 +108,9 @@ class TPatriciaTrie{
         return curNode;
     }
 
-    void Insert(const std::string& insKey, const int& insNum){
+    void Insert(const std::string& insKey, const uint64_t& insNum){
         if (header == nullptr){
-            header = new nPatricia::TNode(insKey, insNum,0);
+            header = new nPatricia::TNode{insKey,insNum,0};
             header->left = header;
             std::cout << "OK\n";
             return;
@@ -150,119 +151,134 @@ class TPatriciaTrie{
         std::cout << "OK\n";
     }
 
-    void Delete(std::string delKey){
+    bool Delete(std::string delKey){
         //1. если нет header, то и искать нечего
-        if(header == nullptr){
-            std::cout << "NoSuchWord\n";
-            return;
-        }
+        if(header == nullptr)
+            return false;
         //2. 1 нода header, тогда нужно проверить ключ и просто удалить ноду если ключ совпадает
         if (header->left == header){
-            std::cout << "header->left == header" << '\n';
             if (header->key == delKey ){
                 DeleteNode(header);
+                return true;
             }
-            else{
-                std::cout << "NoSuchWord\n";
-            }
-            return;
+            else
+                return false;
         }
         std::tuple<TNode*,TNode*,TNode*> tupleNode = SearchNodeAndParent(delKey);
         TNode* curNode = std::get<0>(tupleNode);
         TNode* prevNode = std::get<1>(tupleNode);
         TNode* prePreviousNode = std::get<2>(tupleNode);
-        TNode* parentNode = (curNode->key == prevNode->key) ?
-                            prePreviousNode :
-                            prevNode;
+        // TNode* parentNode = (curNode->key == prevNode->key) ?
+        //                    prePreviousNode :
+        //                    prevNode;
         // нода с ключом delkey не найдена
-        if (curNode->key != delKey){
-            std::cout << "NoSuchWord\n";
-            return;
-        }
+        if (curNode->key != delKey)
+            return false;
         // 3. у ключа который мы удаляем есть 1 обратная ссылка на самого себя
-        if (curNode->left == curNode || curNode->right == curNode){
-            bool rightLinkParent = CheckBit(parentNode->key,parentNode->bitNumber);
-            bool leftLinkToCur = (curNode->left == curNode);
-            if (rightLinkParent){
-                if (leftLinkToCur){
-                    std::cout << "Here1r\n";
-                    parentNode->right = curNode->right;
-                    DeleteNode(curNode);
-                    return;
-                }
-                std::cout << "Herer2r\n";
-                parentNode->right = curNode->left;
-                DeleteNode(curNode);
-                return;
-            }
-            else{
-                if (leftLinkToCur){
-                    std::cout << "Here1l\n";
-                    parentNode->left = curNode->right;
-                    DeleteNode(curNode);
-                    return;
-                }
-                parentNode->left = curNode->left;
-                std::cout << "Here2l\n";
-                DeleteNode(curNode);
-                return;
-            }
+        if (curNode == prevNode){
+            //bool rightLinkParent = CheckBit(parentNode->key,parentNode->bitNumber);
+            //bool leftLinkToCur = (curNode->left == curNode);
+            if (prePreviousNode->left == curNode)
+                prePreviousNode->left = curNode ->left == curNode ? 
+                                        curNode->right :
+                                        curNode->left;
+            else
+                prePreviousNode->right = curNode ->left == curNode ? 
+                                        curNode->right :
+                                        curNode->left;
+            DeleteNode(curNode);
+            return true;
         }// 3     
         // для нашей ноды prevNode есть родитель по которой мы в нее попали это будет наша prePreNode
-        TNode*  q = prevNode; // нода которую пытаемся удалить (обозначение взято из лекции, для удобства выполнения задания)
+        TNode* q = prevNode; // нода которую пытаемся удалить (обозначение взято из лекции, для удобства выполнения задания)
         TNode* x = curNode; // нода которую надо удалить изначально (обозначение взято из лекции, для удобства выполнения задания)
         TNode* parentQ = prePreviousNode;
         // нужно найти такую ноду у которой есть обратная ссылка на q (в лекциях обозначается как p)
-        TNode* p = header;;
+        TNode* p = header;
         curNode = header->left;
         std::string newSearchedKey = q->key;
         while (p->bitNumber < curNode->bitNumber){
-            p = CheckBit(newSearchedKey, curNode->bitNumber) ? 
+            p = curNode;
+            curNode = CheckBit(newSearchedKey, curNode->bitNumber) ? 
                 curNode->right : 
                 curNode->left;
         }
-        bool qRightLinkBackRevers = (q->right == x); //  какая ссылка обратная у q и ведет к x
+        bool qRightBackLinck = CheckBit(p->key, q->bitNumber); // какая обратная ссылка ведет на q у p
         if (p->left == q)
             p->left = x;
         else
             p->right = x;
         if (parentQ->left == q)
-            parentQ->left = qRightLinkBackRevers ?  // если правая ссылка обратная тогда левая содержит ребенка (ведем qParent к этому ребенку)
-                            q->left :
-                            q->right;
+            parentQ->left = qRightBackLinck ?  // если правая ссылка обратная тогда левая содержит ребенка (ведем qParent к этому ребенку)
+                            q->right :
+                            q->left;
         else
-            parentQ->right = qRightLinkBackRevers ? 
-                    q->left : 
-                    q->right;
+            parentQ->right = qRightBackLinck ? 
+                    q->right :
+                    q->left;
         // присваиваем значение предидущей ноды и пытаемся уже удалить ее (в данной ситуации у curNode нет обратной ссылки)
-        p->key =  q->key;
-        p->number = q->number; 
+        x->key =  q->key;
+        x->number = q->number; 
         DeleteNode(q);
-        std::cout << "OK\n";
-        return;
+        //std::cout << "OK\n";
+        return true;
     }
         
+    void DestroyPatricia(TNode* h){
+        if (h->left != nullptr)
+            DestroyPatricia(h->left);
+        else if (h->right != nullptr)
+            DestroyPatricia(h->right);
+        DeleteNode(h);
+    }
 };// class TPatriciaTrie
 }// namespace nPatricia
 
 
 
+void ToLowerCase(std::string& str)
+{
+    for (size_t i = 0; i < str.size(); i++) {
+		if (str[i] >= 'A' && str[i] <= 'Z') {
+			str[i] = (str[i] - ('A'-'a'));
+		}
+	}
+}
+
 
 int main(){
     std::string action;
-    nPatricia::TPatriciaTrie ptr;
+    nPatricia::TPatriciaTrie* pt = new nPatricia::TPatriciaTrie;
+    std::string key;
+    uint64_t  number;
     while(std::cin >> action){
         if (action == "+"){
-            int64_t key;
-            std::string value;
-            std::cin >> key >> value;
-            if ()
-            {
-                /* code */
-            }
-            
+            std::cin >> key >> number;
+            ToLowerCase(key);
+            pt->nPatricia::TPatriciaTrie::Insert(key, number);
+        }
+        else if(action == "-"){
+            std::cin >> key;
+            ToLowerCase(key);
+            if (pt->Delete(key))
+                std::cout << "OK\n";
+            else
+               std::cout << "NoSuchWord\n";
+        }
+        else if (action == "!"){
+            return 1;
         }
         
     }
+    //std::cout << "header: " << pt->header->key << " number: " << pt->header->number  << "\n";
+    //std::cout << "header left bit: " << pt->header->left->key << " number: " << pt->header->left->number << "\n"; 
+    //std::cout << "header left->left bit: " << pt->header->left->left->key <<  " number: " <<  pt->header->left->left->number << "\n";
+    //std::cout << "header left->right bit: " << pt->header->left->right->key << " number: " << pt->header->left->right->number << "\n"; 
+    //delete  ptr->header->left;
+    //delete  ptr->header;
+
+    
+    delete pt;
+
     return 0;
 }
