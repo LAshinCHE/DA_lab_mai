@@ -2,6 +2,7 @@
 #include <string>
 #include <stdexcept>
 #include <tuple>
+#include <fstream>
 
 // char кодируется 1 байтом 8 * 256 = 2048
 
@@ -33,7 +34,7 @@ bool CheckBit(const std::string& s,const int& bitNumber){
     // сократим проверку до 1-ых 5-ти бит
     // в качестве будем передавать bitNumber  натуральные числа
     if (bitNumber < 0 || bitNumber > MAX_BIT_NUMBER) 
-        throw std::runtime_error("Uncorrect bit Number was passed: " + std::to_string(bitNumber) + " in Checkbit function\n");
+        throw std::runtime_error("ERROR: uncorrect bit Number was passed: " + std::to_string(bitNumber) + " in Checkbit function\n");
     int nbitNumber = bitNumber - 1;
     if (nbitNumber < 0)
         nbitNumber = 0;
@@ -60,13 +61,13 @@ class TPatriciaTrie{
 
     private:
     void DeleteNode(TNode* node){
-        //std::cout << "delete : " << node->key << '\n';
+        std::cout << "delete : " << node->key << '\n';
         delete node;
         node = nullptr;
     }
     std::tuple<TNode*,TNode*, TNode*> SearchNodeAndParent(std::string searchedKey){
         if (header == nullptr){
-            throw std::runtime_error("Header is empty cant search the key \n");
+            throw std::runtime_error("ERROR: Header is empty cant search the key \n");
         }
         nPatricia::TNode* curNode = header->left;
         nPatricia::TNode* prevNode = header;   
@@ -92,7 +93,7 @@ class TPatriciaTrie{
 
     TNode* Search(const std::string& searchedKey) const {
         if (header == nullptr){
-            throw std::runtime_error("Header is empty cant search the key \n");
+            return nullptr;
         }
         nPatricia::TNode* curNode = header->left;
         nPatricia::TNode* prevNode = header;
@@ -203,7 +204,7 @@ class TPatriciaTrie{
                 curNode->right : 
                 curNode->left;
         }
-        bool qRightBackLinck = CheckBit(p->key, q->bitNumber); // какая обратная ссылка ведет на q у p
+        bool qRightBackLinck = CheckBit(p->key, q->bitNumber); // какая обратная ссылка ведет на q у p  
         if (p->left == q)
             p->left = x;
         else
@@ -220,21 +221,72 @@ class TPatriciaTrie{
         x->key =  q->key;
         x->number = q->number; 
         DeleteNode(q);
-        //std::cout << "OK\n";
         return true;
     }
         
-    void DestroyPatricia(TNode* h){
-        if (h->left != nullptr)
-            DestroyPatricia(h->left);
-        else if (h->right != nullptr)
-            DestroyPatricia(h->right);
-        DeleteNode(h);
+    void RecurseDestroy(TNode* node){
+        if ((node->bitNumber <= node->left->bitNumber) && (node->left != node))
+            RecurseDestroy(node->left);
+        if ((node->bitNumber <= node->right->bitNumber) && (node->right != node))
+            RecurseDestroy(node->right);
+        DeleteNode(node);
+    }
+    void RecursePrint(TNode* node){
+        if ((node->bitNumber <= node->left->bitNumber) && (node->left != node))
+            RecursePrint(node->left);
+        if ((node->bitNumber <= node->right->bitNumber) && (node->right != node))
+            RecursePrint(node->right);
+        std::cout << node->key << ' ' << node->number << '\n' ;
     }
 };// class TPatriciaTrie
 }// namespace nPatricia
 
+class  SaveLoad{
+    // переменные 
+    public:
+    std::string fp = "";
+    // методы
+    private:
+    bool RecurseSave(nPatricia::TNode* node,std::ofstream& ostrm){
+        if (!(ostrm << node->key << ' ' << node->number << ' ' << node->bitNumber << '\n')){
+            return false;
+        }
+        bool noError = true;
+        if ((node->bitNumber <= node->left->bitNumber) && (node->left != node)){
+            noError  &= RecurseSave(node->left,ostrm);
+        }
+        if ((node->bitNumber <= node->right->bitNumber) && (node->right != node)){
+            noError  &= RecurseSave(node->right,ostrm);
+        }
+        return noError;
 
+    }
+    public:
+    SaveLoad(std::string filePath) : fp {filePath}{};
+    bool Save(nPatricia::TPatriciaTrie* pt){
+        std::ofstream ostrm(fp, std::ios_base::binary | std::ios_base::out); // поток для записи открываем в бинарном виде для чтения
+        if (pt->header == nullptr){
+            ostrm.clear();
+            ostrm.close();
+            std::cout << "ERROR: noting to save, patricia is empty\n";
+            return false;
+        }
+        if(!(ostrm << pt->header->key << ' ' << pt->header->number << ' ' << pt->header->bitNumber << '\n')) {
+            std::cout << "ERROR: can`t write header to file\n";
+            return false;
+        }
+        if (pt->header->left == pt->header)
+            return true;
+        if (RecurseSave(pt->header->left, ostrm)){
+            return true;
+        }
+        std::cout << "ERORR: recurse save wrong\n";      
+        return false;
+    }
+    bool Load(nPatricia::TPatriciaTrie* pt){
+        return false; // заглушка
+    }
+};
 
 void ToLowerCase(std::string& str)
 {
@@ -266,19 +318,37 @@ int main(){
                std::cout << "NoSuchWord\n";
         }
         else if (action == "!"){
-            return 1;
+            std::cin >> action;
+            if (action == "Save"){
+                std::string filename;
+                std::cin >> filename;
+                SaveLoad sl(filename);
+                if (sl.Save(pt))
+                    std::cout<<"OK\n";
+                else{
+                    std::cout << "ERROR: saving was not successful\n";
+                }
+            }
+            else if (action == "Load"){
+                pt->RecurseDestroy(pt->header);
+                std::string filename;
+                std::cin >> filename;
+                SaveLoad sl(filename);
+                nPatricia::TPatriciaTrie* ptTemp = new nPatricia::TPatriciaTrie;
+                if (sl.Load(ptTemp)){
+                    std::swap(ptTemp, pt);
+                    std::cout << "OK\n";
+                }
+                else
+                    std::cout << "ERROR: failed to upload file";
+                ptTemp->RecurseDestroy(ptTemp->header->left);
+                delete ptTemp->header;
+            }
+            else{
+                std::cout << "ERROR: No such action\n";
+            }
         }
         
     }
-    //std::cout << "header: " << pt->header->key << " number: " << pt->header->number  << "\n";
-    //std::cout << "header left bit: " << pt->header->left->key << " number: " << pt->header->left->number << "\n"; 
-    //std::cout << "header left->left bit: " << pt->header->left->left->key <<  " number: " <<  pt->header->left->left->number << "\n";
-    //std::cout << "header left->right bit: " << pt->header->left->right->key << " number: " << pt->header->left->right->number << "\n"; 
-    //delete  ptr->header->left;
-    //delete  ptr->header;
-
-    
-    delete pt;
-
     return 0;
 }
