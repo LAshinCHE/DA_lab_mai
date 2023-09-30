@@ -261,6 +261,27 @@ class  SaveLoad{
         return noError;
 
     }
+    bool RecurseLoad(nPatricia::TPatriciaTrie* pt,nPatricia::TNode* cur,std::ifstream& istrm){
+        std::string k;
+        int64_t num;
+        int8_t  bitNum;
+        char c;
+        if (!(istrm >> k >> num >> bitNum >> c)){
+            return false;
+        }
+        else{
+            pt->Insert(k,num);
+        }
+        bool noError = true;
+        if ((cur->bitNumber <= cur->left->bitNumber) && (cur->left != cur)){
+            noError  &= RecurseLoad(pt,cur->left,istrm);
+        }
+        if ((cur->bitNumber <= cur->right->bitNumber) && (cur->right != cur)){
+            noError  &= RecurseLoad(pt,cur->right,istrm);
+        }
+        return noError;
+
+    }
     public:
     SaveLoad(std::string filePath) : fp {filePath}{};
     bool Save(nPatricia::TPatriciaTrie* pt){
@@ -273,18 +294,39 @@ class  SaveLoad{
         }
         if(!(ostrm << pt->header->key << ' ' << pt->header->number << ' ' << pt->header->bitNumber << '\n')) {
             std::cout << "ERROR: can`t write header to file\n";
+            ostrm.close();
             return false;
         }
         if (pt->header->left == pt->header)
+            ostrm.close();
             return true;
         if (RecurseSave(pt->header->left, ostrm)){
+            ostrm.close();
             return true;
         }
         std::cout << "ERORR: recurse save wrong\n";      
+        ostrm.close();
         return false;
     }
     bool Load(nPatricia::TPatriciaTrie* pt){
-        return false; // заглушка
+        std::ifstream istrm(fp, std::ios_base::binary | std::ios_base::in);
+        std::string k;  
+        uint64_t num; 
+        uint8_t bitnum;
+        char c;
+        if (!(istrm >> k >> num >> bitnum >> c) ){
+            std::cout << "ERROR: Cant read header\n";
+            istrm.close();
+            return false;
+        }
+        pt->Insert(k,num);
+        if (RecurseLoad(pt,pt->header,istrm)){
+            istrm.close();
+            return true;
+        }
+        std::cout << "ERROR: cant load dict\n";
+        istrm.close();
+        return false; // заг лушка
     }
 };
 
@@ -330,7 +372,6 @@ int main(){
                 }
             }
             else if (action == "Load"){
-                pt->RecurseDestroy(pt->header);
                 std::string filename;
                 std::cin >> filename;
                 SaveLoad sl(filename);
