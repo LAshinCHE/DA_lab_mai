@@ -2,7 +2,7 @@ GXX = g++
 FLAG= -std=c++17 -Wall -pedantic -Werror -g
 
 all: lab1 test
-
+	
 lab1: lab1.cpp KeyAndValue.cpp sorting.cpp
 	$(GXX) $(FLAG) lab1.cpp KeyAndValue.cpp sorting.cpp -o lab
 

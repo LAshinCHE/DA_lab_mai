@@ -7,7 +7,6 @@
 int main(){
     std::ios::sync_with_stdio(false);
     std::cin.tie(0);
-    std::cout.tie(0);
     unsigned long long key;
     std::string str;
     nKeyAndValue::TKeyAndValue el;
@@ -17,7 +16,7 @@ int main(){
     {
         el = {key,str};
         if (maxKey < key)
-            maxKey = key;
+            maxKey = key;   
         
         dict.AddElement(el);
     }
